@@ -3,18 +3,24 @@
 #include <string>
 #include "trace.h"
 #ifdef DEBUG
-#define X_EXCEPTION(X,P) struct X : public ::Gwers::Exception \
-                         { X(int l): ::Gwers::Exception("P","X",l) {} }
-#define X_ASSERT(T,X,L) ::Gwers::Exception::assert<X>(T,L)
-#define X_CHECK(T,X,L) ::Gwers::Exception::assert<X>(T,L)
-#define X_PASS(F,V,X,L) ::Gwers::Exception::assert<X>(V C F,L)
-#define X_TRY(S,X,L) try { S; } catch(...) { throw X(L); }
+#define GWX_DECLARE(N) static inline const char* GWX__get__who() { return N; }
+#define GWX_EXCEPTION(X) struct X : public ::Gwers::Exception\
+                         {\
+                            X(int l):\
+                               ::Gwers::Exception(GWX__get__who(),"X",l)\
+                            {}\
+                         };
+#define GWX_ASSERT(T,X,L) ::Gwers::Exception::assert<X>(T,L);
+#define GWX_CHECK(T,X,L) ::Gwers::Exception::assert<X>(T,L);
+#define GWX_PASS(V,C,F,X,L) ::Gwers::Exception::assert<X>(V C F,L);
+#define GWX_TRY(S,X,L) try { S; } catch(...) { throw X(L); }
 #else
-#define X_EXCEPTION(X,P)
-#define X_ASSERT(T,X,L)
-#define X_CHECK(T,X,L) T
-#define X_PASS(F,V,X,L) F
-#define X_TRY(S,X,L) S;
+#define GWX_DECLARE(N)
+#define GWX_EXCEPTION(X)
+#define GWX_ASSERT(T,X,L)
+#define GWX_CHECK(T,X,L) T;
+#define GWX_PASS(V,C,F,X,L) F;
+#define GWX_TRY(S,X,L) S;
 #endif
 namespace Gwers {
 
@@ -32,53 +38,63 @@ namespace Gwers {
 /// code base are DEBUG and DTRACE.
 ///
 /// DEBUG will enable the use of assertion checks with code. The macros used for
-/// assertion checking are X_EXCEPTION, X_ASSERT, X_CHECK, X_PASS, and X_TRY.
+/// assertion checking are GWX_DECLARE, GWX_EXCEPTION, GWX_ASSERT, GWX_CHECK,
+/// GWX_PASS, and GWX_TRY.
 ///
-/// X_EXCEPTION(X,P) defines a new exception within the scope it is defined. It
+/// GWX_DECLARE(N) must be called once before any GWX_EXCEPTION is defined
+/// within a namespace or class. N is the fully qualified name of the namespace
+/// or class, including all namespaces and classes it is nested within. If DEBUG
+/// is not defined then all GWX_DECLARE macros resolve to an empty string.
+///
+/// GWX_EXCEPTION(X) defines a new exception within the scope it is defined. It
 /// is recommended to define all exceptions within the individual classes of
-/// your code. X is the name of the new exception to be defined and P is the
-/// name of the class or namespace which it is being defined within. If DEBUG is
-/// not defined then all X_EXCEPTION macros resolve to a NULL string.
+/// your code. X is the name of the new exception to be defined. If DEBUG is not
+/// defined then all GWX_EXCEPTION macros resolve to an empty line.
 ///
-/// X_ASSERT(T,X,L) tests a condition, throwing an exception if that condition
+/// GWX_ASSERT(T,X,L) tests a condition, throwing an exception if that condition
 /// is false. The boolean condition to test is T. The exception type that will
 /// be thrown is X. The line number where this exception was thrown is L, which
-/// should always be passed with __LINE__. If DEBUG is not defined then all
-/// X_ASSERT macros resolve to a NULL string and do NOT execute the conditional
-/// T.
+/// should always be passed with %__LINE__. If DEBUG is not defined then all
+/// GWX_ASSERT macros resolve to an empty line and do NOT execute the
+/// conditional T.
 ///
-/// @warning For X_ASSERT(T,X,L), if the conditional T has a function call
+/// @warning For GWX_ASSERT(T,X,L), if the conditional T has a function call
 /// within it, then disabling DEBUG will make it so that function is NOT called!
 ///
-/// X_CHECK(T,X,L) works almost identical to X_ASSERT(T,X,L) with one important
-/// difference. If DEBUG is not defined then the conditional T is still executed
-/// but never evaluated. So if you pass a function or critical part of code that
-/// needs to be executed no matter what then you must use X_CHECK.
+/// GWX_CHECK(T,X,L) works almost identical to X_ASSERT(T,X,L) with one
+/// important difference. If DEBUG is not defined then the conditional T is
+/// still executed but never evaluated. So if you pass a function or critical
+/// part of code that needs to be executed no matter what then you must use
+/// GWX_CHECK.
 ///
-/// X_PASS(F,C,V,X,L) tests the return value of a function, throwing an
-/// exception if the comparison fails. Like X_CHECK and X_ASSERT, the exception
-/// type that will be thrown is X and L is the line number where it is thrown. F
-/// is the function to be called, C is the comparison to use, and V is the value
-/// compared to the function's return value. The order of comparison is V first
-/// and F last. For example, using >= for the C value equations to V being
-/// greater than or equal to the return value of the function. If DEBUG is not
-/// defined then the function F will still be executed but with no comparison or
-/// possibility of throwing an exception.
+/// GWX_PASS(V,C,F,X,L) tests the return value of a function, throwing an
+/// exception if the comparison fails. Like GWX_CHECK and GWX_ASSERT, the
+/// exception type that will be thrown is X and L is the line number where it is
+/// thrown. F is the function to be called, C is the comparison to use, and V is
+/// the value compared to the function's return value. The order of comparison
+/// is V first and F last. For example, using >= for the C value equates to V
+/// being greater than or equal to the return value of the function. If DEBUG is
+/// not defined then the function F will still be executed but with no
+/// comparison or possibility of throwing an exception.
 ///
-/// X_TRY(S,X,L) will catch any exception thrown by S, throwing a new exception
-/// of type X. S will almost always be a system function that has the potential
-/// of throwing an exception that is not of type Gwers::Exception. If DEBUG is
-/// not defined then the statement S will be called but no exceptions will be
-/// caught if they are thrown by S.
+/// GWX_TRY(S,X,L) will catch any exception thrown by S, throwing a new
+/// exception of type X. S will almost always be a system function that has the
+/// potential of throwing an exception that is not of type Gwers::Exception. If
+/// DEBUG is not defined then the statement S will be called but no exceptions
+/// will be caught if they are thrown by S.
 ///
 /// DTRACE will enable stack tracing that will give you a snapshot of the
 /// function call stack if an exception is thrown. While you can enable DTRACE
 /// without DEBUG, there is no reason to do so. Therefore, if you define DTRACE
 /// you always want to have DEBUG defined also. Using DTRACE is much simpler, at
-/// the beginning of each function of any type call the X_BEGIN(F) macro, where
-/// F is a string defining the full function name, including the scope
-/// resolution and all arguments. If DTRACE is not defined then all X_BEGIN
-/// macros resolve to a NULL string.
+/// the beginning of each function of any type call the GWX_BEGIN(F,...) macro,
+/// where F is a string defining the full function name, including the scope
+/// resolution and all arguments, and the variable list of argument after F is
+/// the list of all arguments given to the function, if any. By providing the
+/// values of all function arguments the stack trace information will provide a
+/// very rich depth of information. It is recommended to use
+/// %__PRETTY_FUNCTION__ for the F argument of GWX_BEGIN. If DTRACE is not
+/// defined then all X_BEGIN macros resolve to an empty line.
 ///
 /// If an exception is caught, DTRACE is enabled, and you wish to examine the
 /// function stack, then use the Trace::begin() and Trace::end() functions to
