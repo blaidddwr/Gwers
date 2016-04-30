@@ -2,10 +2,14 @@
 #define GWERS_TRACE_H
 #include <string>
 #include <vector>
+#include <sstream>
 #ifdef DTRACE
-#define X_BEGIN(F) ::Gwers::Trace x_trace(F)
+#define GWX_BEGIN(F,...) std::ostringstream GWX__tmp__string;\
+                         GWX__tmp__string << F;\
+                         ::Gwers::Trace::build(GWX__tmp__string,##__VA_ARGS__);\
+                         ::Gwers::Trace x_trace(GWX__tmp__string.str());
 #else
-#define X_BEGIN(F)
+#define GWX_BEGIN(F,...)
 #endif
 namespace Gwers {
 
@@ -18,7 +22,7 @@ namespace Gwers {
 /// thread within their program. The function stack is tracked by the Trace
 /// class making its own static stack which it adds and removes called functions
 /// from. The only code required in all functions that will be tracked within
-/// the stack is the X_BEGIN macro at the beginning of each function. This
+/// the stack is the GWX_BEGIN macro at the beginning of each function. This
 /// creates a Trace object, which adds the function to the stack. Because it is
 /// an object, once the end of the function is reached the destructor removes
 /// the function from the stack. There is a special lock() function which makes
@@ -29,8 +33,8 @@ namespace Gwers {
 ///
 /// @warning Except for using begin() and end() to iterate through the recorded
 /// stack, the user should not directly use this class. All the user needs to do
-/// is enable DTRACE and add the X_BEGIN macro at the beginning of each function
-/// to be tracked.
+/// is enable DTRACE and add the GWX_BEGIN macro at the beginning of each
+/// function to be tracked.
 class Trace
 {
 public:
@@ -88,6 +92,29 @@ public:
    static const iter begin();
    /// @brief Get one past end of list iterator for classes' stack.
    static const iter end();
+   /// @brief Do nothing, wrapper for other build functions.
+   static void build(std::ostringstream&) {}
+   /// @brief End of list build function, see main build function for
+   /// description.
+   template<class T> static void build(std::ostringstream& str, T val);
+   /// @brief Builds a variable list of function argument values.
+   ///
+   /// @tparam T First argument in list of variable function arguments.
+   /// @tparam Args List of remaining arguments for provided function.
+   ///
+   /// @param str Output stream where list of variable arguments will be written
+   /// to.
+   /// @param val First argument in variable list of function arguments.
+   /// @param args Variable list of remaining arguments for provided function.
+   ///
+   /// Adds a variable list of function argument values to an output string
+   /// stream.
+   ///
+   /// @warning This function should never be called directly by the user. The
+   /// GWX_BEGIN macro uses this function to build the function name header with
+   /// a variable number of function argument values.
+   template<class T, class... Args>
+      static void build(std::ostringstream& str,T val, Args... args);
 private:
    // *
    // * DECLERATIONS
@@ -138,6 +165,22 @@ inline const Trace::iter Trace::begin()
 inline const Trace::iter Trace::end()
 {
    return _stack.end();
+}
+
+
+
+template<class T> inline void Trace::build(std::ostringstream& str, T val)
+{
+   str << "[" << val << "]";
+}
+
+
+
+template<class T, class... Args>
+   void Trace::build(std::ostringstream& str, T val, Args... args)
+{
+   str << "[" << val << "],";
+   build(str,args...);
 }
 
 
