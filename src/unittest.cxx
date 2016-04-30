@@ -66,13 +66,13 @@ bool UnitTest::Run::execute()
       {
          std::cout << i.first << _count << " FAILED.\n";
          std::cout << "Gwers: " << e.who() << ":" << e.what() << "\n";
-         std::cout << "TRACE: ";
-         for (auto i = Gwers::Trace::begin();i!=Gwers::Trace::end();)
+         std::cout << "TRACE:\n";
+         for (auto i = Gwers::Trace::begin();i!=Gwers::Trace::end();++i)
          {
             std::cout << *i;
             if (++i!=Gwers::Trace::end())
             {
-               std::cout << " ---> ";
+               std::cout << " --->\n";
             }
             else
             {
