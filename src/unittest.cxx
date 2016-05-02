@@ -52,7 +52,10 @@ bool UnitTest::Run::execute()
 {
    bool ret {true};
    std::cout << _name;
-   _in();
+   if (_in)
+   {
+      _in();
+   }
    for (auto i:_tests)
    {
       _count = 1;
@@ -79,7 +82,10 @@ bool UnitTest::Run::execute()
                std::cout << "\n";
             }
          }
-         _out();
+         if (_out)
+         {
+            _out();
+         }
          ret = false;
          break;
       }
@@ -87,21 +93,30 @@ bool UnitTest::Run::execute()
       {
          std::cout << i.first << _count << " FAILED.\n";
          std::cout << "Std: " << e.what() << "\n";
-         _out();
+         if (_out)
+         {
+            _out();
+         }
          ret = false;
          break;
       }
       catch (...)
       {
          std::cout << i.first << _count << " FAILED.\n";
-         _out();
+         if (_out)
+         {
+            _out();
+         }
          ret = false;
          break;
       }
    }
    if (ret)
    {
-      _out();
+      if (_out)
+      {
+         _out();
+      }
       std::cout << "\n";
    }
    return ret;

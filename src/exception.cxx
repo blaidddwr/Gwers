@@ -223,15 +223,10 @@ void base_catch(UnitTest::Run& ut)
 
 
 
-/// @brief Internal function that does nothing.
-void none() {}
-
-
-
 /// @brief Initialize all unit tests for Exception class.
 void init(UnitTest& ut)
 {
-   UnitTest::Run& t = ut.add("Exception",none,none);
+   UnitTest::Run& t = ut.add("Exception",nullptr,nullptr);
    t.add("basic",basic);
    t.add("assert",assert);
    t.add("base_catch",base_catch);

@@ -182,15 +182,10 @@ void extra(UnitTest::Run& ut)
 
 
 
-/// @brief Internal function that does nothing.
-void none() {}
-
-
-
 /// @brief Initialize all unit tests for Trace class.
 void init(UnitTest& ut)
 {
-   UnitTest::Run& t = ut.add("Trace",none,none);
+   UnitTest::Run& t = ut.add("Trace",nullptr,nullptr);
    t.add("basic",basic);
    t.add("lock",lock);
    t.add("flush",flush);
