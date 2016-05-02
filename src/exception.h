@@ -3,11 +3,11 @@
 #include <string>
 #include "trace.h"
 #ifdef DEBUG
-#define GWX_DECLARE(N) static inline const char* GWX__get__who() { return N; }
+#define GWX_DECLARE(N) static inline const char* GWX__get__who() { return #N; }
 #define GWX_EXCEPTION(X) struct X : public ::Gwers::Exception\
                          {\
                             X(int l):\
-                               ::Gwers::Exception(GWX__get__who(),"X",l)\
+                               ::Gwers::Exception(GWX__get__who(),#X,l)\
                             {}\
                          };
 #define GWX_ASSERT(T,X,L) ::Gwers::Exception::assert<X>(T,L);
